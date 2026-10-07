@@ -47,6 +47,7 @@
     [SEC:JS:CORE:BOOT]      - app (Bootstrap/Init)
     [SEC:JS:CTRL:HUB]       - HubController
     [SEC:JS:CTRL:REFINE]    - RefineMaskController
+    [SEC:JS:CTRL:TML]       - TimelineController (Branching Timeline Canvas)
     =================================================================================================
 -->
 <html lang="en">
@@ -3481,6 +3482,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" />
                         </svg></button>
+                    <button data-action="open-modal" data-target="branching-timeline-modal"
+                        class="bg-gray-700/40 hover:bg-gray-600/80 text-white font-bold py-2 px-4 rounded-lg"
+                        title="Branching Timeline"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-git-branch"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg></button>
                     <button data-action="open-modal" data-target="knowledge-modal"
                         class="bg-gray-700/40 hover:bg-gray-600/80 text-white font-bold py-2 px-4 rounded-lg"
                         title="Knowledge"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
@@ -3545,6 +3549,9 @@
                         <a href="#" data-action="open-modal" data-target="world-map-modal"
                             onclick="AppController.toggleMobileMenu(); return false;"
                             class="block pl-8 pr-4 py-3 text-white hover:bg-gray-700">World Map</a>
+                        <a href="#" data-action="open-modal" data-target="branching-timeline-modal"
+                            onclick="AppController.toggleMobileMenu(); return false;"
+                            class="block pl-8 pr-4 py-3 text-white hover:bg-gray-700">Branching Timeline</a>
                         <a href="#" data-action="open-modal" data-target="knowledge-modal"
                             onclick="AppController.toggleMobileMenu(); return false;"
                             class="block pl-8 pr-4 py-3 text-white hover:bg-gray-700">Knowledge</a>
@@ -4691,6 +4698,61 @@
                                 create one to configure.</div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branching Timeline Canvas: Visual interactive tree of narrative branches and checkpoints -->
+    <!-- [UI:MODAL:BRANCHING_TIMELINE] -->
+    <div id="branching-timeline-modal" class="fixed inset-0 z-50 items-center justify-center hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/75" data-action="close-modal" data-id="branching-timeline-modal"></div>
+        <div id="branching-timeline-modal-content"
+            class="bg-gray-900/95 backdrop-blur-md rounded-xl shadow-2xl w-11/12 max-w-7xl h-[92vh] relative flex flex-col border border-gray-700/80 overflow-hidden">
+            <div class="p-4 border-b border-gray-800 flex flex-wrap justify-between items-center gap-3 bg-black/40 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 rounded-lg bg-teal-500/20 text-teal-400 border border-teal-500/30">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            Branching Timeline Canvas
+                            <span id="timeline-current-branch-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-teal-900/50 text-teal-300 border border-teal-700/50 font-mono">Current Branch</span>
+                        </h3>
+                        <p class="text-xs text-gray-400">Interactive narrative tree. Double-click any node to jump, or branch to explore new paths.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button data-action="timeline-fork-branch" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <span>Fork Branch</span>
+                    </button>
+                    <button data-action="timeline-rename-branch" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer">
+                        Rename Branch
+                    </button>
+                    <div class="h-5 w-px bg-gray-700 mx-1"></div>
+                    <button data-action="timeline-zoom-in" class="p-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700 transition-colors cursor-pointer" title="Zoom In">+</button>
+                    <button data-action="timeline-zoom-out" class="p-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700 transition-colors cursor-pointer" title="Zoom Out">-</button>
+                    <button data-action="timeline-reset-zoom" class="px-2 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg text-xs border border-gray-700 transition-colors cursor-pointer" title="Reset View">100%</button>
+                    <button data-action="close-modal" data-id="branching-timeline-modal" class="p-2 bg-black/40 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors ml-2 cursor-pointer" title="Close">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="timeline-canvas-container" class="relative flex-grow w-full h-full overflow-hidden select-none cursor-grab active:cursor-grabbing" style="background-color: #0b0f19; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 24px 24px;">
+                <svg id="timeline-svg-canvas" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="active-path-glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <g id="timeline-canvas-viewport"></g>
+                </svg>
+                <div id="timeline-node-popover" class="hidden absolute pointer-events-auto bg-gray-950/95 border border-teal-500/40 rounded-xl p-3 shadow-2xl z-30 max-w-sm backdrop-blur-md text-xs space-y-2">
                 </div>
             </div>
         </div>
@@ -6371,14 +6433,11 @@
                 <label class="text-gray-400 text-sm block mb-1">Model</label>
                 <select id="gemini-model-selector"
                     class="w-full rounded-lg p-2 bg-gray-700 border border-gray-600 text-white">
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Fast/Reasoning)</option>
-                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Deep Reasoning)</option>
-                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast/Multimodal)</option>
-                    <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking</option>
-                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast/Cheap)</option>
-                    <option value="gemini-1.5-flash-8b">Gemini 1.5 Flash-8B (Fastest)</option>
-                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (High Intelligence)</option>
-                    <option value="gemini-1.0-pro">Gemini 1.0 Pro (Legacy)</option>
+                    <option value="gemini-3.8-flash">Gemini 3.8 Flash (Latest / Recommended)</option>
+                    <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Complex Reasoning)</option>
+                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite (Fast)</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                 </select>
             </div>
             <div id="openrouter-settings">
@@ -7353,7 +7412,7 @@
                     <div class="flex space-x-2">
                         <input type="text" id="image-gen-nanogpt-model-input" data-setting-key="imageGenNanoGPTModel"
                             class="flex-grow rounded-lg p-2 bg-black/20 border border-gray-600 text-white"
-                            placeholder="black-forest-labs/flux-1-schnell">
+                            placeholder="flux-schnell">
                         <button onclick="AppController.openNanoGPTImageModelBrowser()"
                             class="bg-gray-700 hover:bg-violet-600 text-white font-bold py-2 px-3 rounded-lg transition-colors"
                             title="Browse models">
@@ -9553,110 +9612,221 @@
             /**
              * NanoGPT Image Generation Adapter
              */
-            async _generateNanoGPT(prompt, options, initImage = null) {
+            async _generateNanoGPT(prompt, options = {}, initImage = null) {
                 const globalSettings = StateManager.data.globalSettings;
                 const key = globalSettings.imageGenNanoGPTKey || globalSettings.nanoGPTKey;
 
                 if (!key) throw new Error("NanoGPT API Key is missing. Please set your API key in settings.");
 
-                const model = globalSettings.imageGenNanoGPTModel || "black-forest-labs/flux-1-schnell";
+                let model = options.model || globalSettings.imageGenNanoGPTModel || "flux-schnell";
+                if (model === "black-forest-labs/flux-1-schnell") {
+                    model = "flux-schnell";
+                }
                 const width = options.width || globalSettings.imageGenWidth || 1024;
                 const height = options.height || globalSettings.imageGenHeight || 1024;
-                const size = `${width}x${height}`;
 
-                // NanoGPT supports standard OpenAI /v1/images endpoint as well as chat completions
-                // First attempt: Standard OpenAI DALL-E / /v1/images payload
+                // Snap requested dimensions to the nearest standard discrete resolution supported by NanoGPT image models
+                const supportedResolutions = [
+                    [1024, 1024], [1024, 768], [768, 1024], [512, 512],
+                    [1408, 1024], [1024, 1408], [1920, 1088], [1088, 1920], [2048, 2048]
+                ];
+                let size = `${width}x${height}`;
+                const exactMatch = supportedResolutions.find(([sw, sh]) => sw === width && sh === height);
+                if (exactMatch) {
+                    size = `${exactMatch[0]}x${exactMatch[1]}`;
+                } else {
+                    const targetAspect = width / height;
+                    let best = supportedResolutions[0];
+                    let minDiff = Infinity;
+                    for (const [sw, sh] of supportedResolutions) {
+                        const aspectDiff = Math.abs((sw / sh) - targetAspect);
+                        const sizeDiff = Math.abs((sw * sh) - (width * height)) / 1000000;
+                        const score = aspectDiff * 2.5 + sizeDiff;
+                        if (score < minDiff) {
+                            minDiff = score;
+                            best = [sw, sh];
+                        }
+                    }
+                    size = `${best[0]}x${best[1]}`;
+                }
+
                 const imagePayload = {
                     model: model,
                     prompt: prompt,
                     n: 1,
                     size: size
                 };
-
-                console.log("NanoGPT Image Req:", imagePayload);
-
-                try {
-                    const response = await fetch("https://nano-gpt.com/api/v1/images", {
-                        method: 'POST',
-                        headers: {
-                            "Authorization": `Bearer ${key}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(imagePayload)
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log("NanoGPT Image Res:", data);
-
-                        if (data.data && data.data.length > 0) {
-                            const item = data.data[0];
-                            if (item.url) {
-                                if (item.url.startsWith('data:')) {
-                                    const [header, b64] = item.url.split(',');
-                                    const mime = header.split(':')[1].split(';')[0];
-                                    return UTILITY.base64ToBlob(b64, mime);
-                                }
-                                return await (await fetch(item.url)).blob();
-                            }
-                            if (item.b64_json) {
-                                return UTILITY.base64ToBlob(item.b64_json, 'image/png');
-                            }
-                        }
-                    }
-
-                    // Fallback to OpenAI chat completions endpoint format for NanoGPT image models
-                    const chatPayload = {
-                        model: model,
-                        messages: [
-                            {
-                                role: "system",
-                                content: "You are an image generation tool. Generate the image requested by the user and output ONLY the image URL. Do not add any conversational text."
-                            },
-                            { role: "user", content: prompt }
-                        ]
-                    };
-
-                    const chatRes = await fetch("https://nano-gpt.com/api/v1/chat/completions", {
-                        method: 'POST',
-                        headers: {
-                            "Authorization": `Bearer ${key}`,
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(chatPayload)
-                    });
-
-                    if (!chatRes.ok) {
-                        const errText = await chatRes.text();
-                        throw new Error(`NanoGPT Image Error (${chatRes.status}): ${errText.substring(0, 200)}`);
-                    }
-
-                    const chatData = await chatRes.json();
-                    if (chatData.choices && chatData.choices.length > 0) {
-                        const msg = chatData.choices[0].message;
-                        if (msg.images && msg.images.length > 0) {
-                            const imgUrl = msg.images[0].url || msg.images[0];
-                            if (typeof imgUrl === 'string') {
-                                if (imgUrl.startsWith('data:')) {
-                                    const [header, b64] = imgUrl.split(',');
-                                    const mime = header.split(':')[1].split(';')[0];
-                                    return UTILITY.base64ToBlob(b64, mime);
-                                }
-                                return await (await fetch(imgUrl)).blob();
-                            }
-                        }
-                        const content = msg.content || "";
-                        const urlMatch = content.match(/https?:\/\/[^\s<>)\]}]+/);
-                        if (urlMatch) {
-                            return await (await fetch(urlMatch[0])).blob();
-                        }
-                    }
-
-                    throw new Error("Could not extract image from NanoGPT response.");
-                } catch (e) {
-                    console.error("NanoGPT Image Gen Failed:", e);
-                    throw e;
+                if (initImage) {
+                    imagePayload.imageDataUrl = initImage;
                 }
+
+                console.log("NanoGPT Image Req:", { model, size, prompt: prompt.substring(0, 100) });
+
+                const headers = {
+                    "Authorization": `Bearer ${key}`,
+                    "x-api-key": key,
+                    "Content-Type": "application/json"
+                };
+
+                // The dedicated image API (/api/v1/images) natively supports all NanoGPT image models (including pony, flux, sdxl, etc.)
+                const endpointsToTry = [
+                    "https://nano-gpt.com/api/v1/images",
+                    "https://api.nano-gpt.com/api/v1/images",
+                    "https://nano-gpt.com/api/v1/images/generations",
+                    "https://api.nano-gpt.com/v1/images/generations"
+                ];
+
+                let lastError = null;
+
+                for (const endpoint of endpointsToTry) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify(imagePayload)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log("NanoGPT Image Res:", data);
+
+                            if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+                                const item = data.data[0];
+                                if (typeof item === 'string') {
+                                    if (item.startsWith('data:')) {
+                                        const [header, b64] = item.split(',');
+                                        const mime = header.split(':')[1].split(';')[0];
+                                        return UTILITY.base64ToBlob(b64, mime);
+                                    }
+                                    return await (await fetch(item)).blob();
+                                }
+                                if (item.url) {
+                                    if (item.url.startsWith('data:')) {
+                                        const [header, b64] = item.url.split(',');
+                                        const mime = header.split(':')[1].split(';')[0];
+                                        return UTILITY.base64ToBlob(b64, mime);
+                                    }
+                                    return await (await fetch(item.url)).blob();
+                                }
+                                if (item.b64_json) {
+                                    return UTILITY.base64ToBlob(item.b64_json, 'image/png');
+                                }
+                                if (item.image) {
+                                    if (item.image.startsWith('data:')) {
+                                        const [header, b64] = item.image.split(',');
+                                        const mime = header.split(':')[1].split(';')[0];
+                                        return UTILITY.base64ToBlob(b64, mime);
+                                    }
+                                    return await (await fetch(item.image)).blob();
+                                }
+                            }
+
+                            if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+                                const item = data.images[0];
+                                const url = item.url || item;
+                                if (typeof url === 'string') {
+                                    if (url.startsWith('data:')) {
+                                        const [header, b64] = url.split(',');
+                                        const mime = header.split(':')[1].split(';')[0];
+                                        return UTILITY.base64ToBlob(b64, mime);
+                                    }
+                                    return await (await fetch(url)).blob();
+                                }
+                            }
+
+                            if (data.b64_json) {
+                                return UTILITY.base64ToBlob(data.b64_json, 'image/png');
+                            }
+
+                            if (data.url) {
+                                if (data.url.startsWith('data:')) {
+                                    const [header, b64] = data.url.split(',');
+                                    const mime = header.split(':')[1].split(';')[0];
+                                    return UTILITY.base64ToBlob(b64, mime);
+                                }
+                                return await (await fetch(data.url)).blob();
+                            }
+                        } else {
+                            const errText = await response.text();
+                            let parsedMsg = errText;
+                            try {
+                                const errJson = JSON.parse(errText);
+                                parsedMsg = errJson.error?.message || errJson.message || errText;
+                            } catch (e) { }
+                            lastError = new Error(`NanoGPT Image Error (${response.status}): ${parsedMsg}`);
+                            if (response.status === 401) {
+                                // Invalid API key credentials - do not retry other endpoints
+                                break;
+                            }
+                            // For 400, 404, 405, 500, etc., continue trying other candidate endpoints
+                            continue;
+                        }
+                    } catch (netErr) {
+                        lastError = netErr;
+                    }
+                }
+
+                // If dedicated image endpoints failed with a model error, and model wasn't flux-schnell,
+                // automatically attempt fallback to the standard flux-schnell model
+                if (model !== "flux-schnell" && lastError && /not supported|model|400|404/i.test(lastError.message)) {
+                    console.warn(`[NanoGPT] Model "${model}" failed (${lastError.message}). Attempting fallback to "flux-schnell"...`);
+                    try {
+                        return await this._generateNanoGPT(prompt, { ...options, model: "flux-schnell" }, initImage);
+                    } catch (fbErr) {
+                        console.warn("[NanoGPT] Fallback to flux-schnell also failed:", fbErr);
+                    }
+                }
+
+                // If dedicated image endpoints failed, only attempt chat completions if the model is NOT an image-only model
+                const isImageOnlyModel = /pony|flux|diffusion|sdxl|midjourney|dall-e|2dn|cyberrealistic|illustrious|animagine/i.test(model);
+                if (!isImageOnlyModel) {
+                    try {
+                        const chatPayload = {
+                            model: model,
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: "You are an image generation tool. Generate the image requested by the user and output ONLY the image URL. Do not add any conversational text."
+                                },
+                                { role: "user", content: prompt }
+                            ]
+                        };
+
+                        const chatRes = await fetch("https://nano-gpt.com/api/v1/chat/completions", {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify(chatPayload)
+                        });
+
+                        if (chatRes.ok) {
+                            const chatData = await chatRes.json();
+                            if (chatData.choices && chatData.choices.length > 0) {
+                                const msg = chatData.choices[0].message;
+                                if (msg.images && msg.images.length > 0) {
+                                    const imgUrl = msg.images[0].url || msg.images[0];
+                                    if (typeof imgUrl === 'string') {
+                                        if (imgUrl.startsWith('data:')) {
+                                            const [header, b64] = imgUrl.split(',');
+                                            const mime = header.split(':')[1].split(';')[0];
+                                            return UTILITY.base64ToBlob(b64, mime);
+                                        }
+                                        return await (await fetch(imgUrl)).blob();
+                                    }
+                                }
+                                const content = msg.content || "";
+                                const urlMatch = content.match(/https?:\/\/[^\s<>)\]}]+/);
+                                if (urlMatch) {
+                                    return await (await fetch(urlMatch[0])).blob();
+                                }
+                            }
+                        }
+                    } catch (chatErr) {
+                        console.warn("NanoGPT chat fallback error:", chatErr);
+                    }
+                }
+
+                console.error("NanoGPT Image Gen Failed:", lastError);
+                throw (lastError || new Error("Could not extract image from NanoGPT response."));
             },
         };
 
@@ -11016,6 +11186,15 @@
                     if (savedSettingsJSON) parsedSettings = JSON.parse(savedSettingsJSON);
                 } catch (error) { parsedSettings = {}; }
 
+                // Migrate default KoboldCPP in web environment to Gemini unless user custom-configured Kobold URL
+                if (parsedSettings.apiProvider === 'koboldcpp' && (!parsedSettings.koboldcpp_url || parsedSettings.koboldcpp_url === 'http://localhost:5001')) {
+                    parsedSettings.apiProvider = 'gemini';
+                }
+                // Migrate discontinued Gemini models
+                if (parsedSettings.geminiModel && (parsedSettings.geminiModel.includes('1.5') || parsedSettings.geminiModel.includes('1.0') || parsedSettings.geminiModel.includes('2.0'))) {
+                    parsedSettings.geminiModel = 'gemini-3.8-flash';
+                }
+
                 // Default autoCloseBrackets to false if not present
                 this.data.globalSettings = { ...defaults, autoCloseBrackets: false, ...parsedSettings };
 
@@ -11742,12 +11921,15 @@
                 const global = StateManager.data.globalSettings;
                 const apiKey = global.geminiApiKey || state.geminiApiKey;
 
-                if (!apiKey) throw new Error("Gemini API key not set.");
+                if (!apiKey) {
+                    throw new Error("Gemini API key is not configured. Please open Settings (gear icon) and enter your Gemini API key (free at https://aistudio.google.com/app/apikey).");
+                }
 
                 // 1. Resolve Model Name
-                // State might hold "gemini-1.5-flash" OR "models/gemini-1.5-flash".
-                // Global setting might hold the fallback.
-                let rawModel = state.geminiModel || global.geminiModel || 'gemini-1.5-flash';
+                let rawModel = state.geminiModel || global.geminiModel || 'gemini-3.8-flash';
+                if (rawModel.includes('1.5') || rawModel.includes('1.0') || rawModel.includes('2.0')) {
+                    rawModel = 'gemini-3.8-flash';
+                }
 
                 // Strip "models/" prefix if present to ensure clean base ID
                 if (rawModel.startsWith('models/')) {
@@ -14232,9 +14414,9 @@ Example output: "Atmospheric dark ambient instrumental, 70 BPM, deep synthesizer
              */
             getDefaultApiSettings() {
                 return {
-                    apiProvider: 'koboldcpp',
+                    apiProvider: 'gemini',
                     geminiApiKey: '',
-                    geminiModel: 'gemini-1.5-flash',
+                    geminiModel: 'gemini-3.8-flash',
                     openRouterKey: '',
                     openRouterModel: 'google/gemini-flash-1.5',
                     koboldcpp_url: 'http://localhost:5001',
@@ -14255,7 +14437,7 @@ Example output: "Atmospheric dark ambient instrumental, 70 BPM, deep synthesizer
                     nanoGPTModel: 'openai/gpt-4o-mini',
                     savedNanoGPTModels: [],
                     imageGenNanoGPTKey: '',
-                    imageGenNanoGPTModel: 'black-forest-labs/flux-1-schnell',
+                    imageGenNanoGPTModel: 'flux-schnell',
                     savedNanoGPTImageModels: [],
                     ttsBackend: 'gemini',
                     nanoGPTTTSModel: 'tts-1',
@@ -15560,6 +15742,50 @@ Example output: "Atmospheric dark ambient instrumental, 70 BPM, deep synthesizer
                     + `Respond as though you are looking at it yourself. Never mention this `
                     + `description, never refer to it as a description, and never state that `
                     + `anything was described to you.`;
+            },
+
+            /**
+             * Pure helper to organize a list of narratives into a timeline branch graph.
+             * @param {Array<Object>} narratives - List of narrative objects with {id, name, parentNarrativeId, branchPointIndex, state}
+             * @param {string} [currentNarrativeId] - ID of currently active narrative
+             * @returns {Object} Graph layout containing branches and connections
+             */
+            buildBranchTimelineGraph(narratives, currentNarrativeId = null) {
+                if (!Array.isArray(narratives) || narratives.length === 0) {
+                    return { branches: [], connections: [] };
+                }
+
+                const branchMap = new Map();
+                narratives.forEach((n, idx) => {
+                    branchMap.set(n.id, {
+                        id: n.id,
+                        name: n.name || `Branch ${idx + 1}`,
+                        parentId: n.parentNarrativeId || null,
+                        forkIndex: typeof n.branchPointIndex === 'number' ? n.branchPointIndex : 0,
+                        messageCount: (n.state && Array.isArray(n.state.chat_history)) ? n.state.chat_history.length : 0,
+                        isCurrent: n.id === currentNarrativeId,
+                        columnIndex: idx
+                    });
+                });
+
+                const connections = [];
+                branchMap.forEach(branch => {
+                    if (branch.parentId && branchMap.has(branch.parentId)) {
+                        const parent = branchMap.get(branch.parentId);
+                        connections.push({
+                            sourceBranchId: parent.id,
+                            targetBranchId: branch.id,
+                            forkIndex: branch.forkIndex,
+                            sourceCol: parent.columnIndex,
+                            targetCol: branch.columnIndex
+                        });
+                    }
+                });
+
+                return {
+                    branches: Array.from(branchMap.values()),
+                    connections
+                };
             }
         };
 
@@ -20062,6 +20288,10 @@ Write only the character's message.`;
                                     <svg class="w-3.5 h-3.5 shrink-0 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                                     <span>Copy Text</span>
                                 </button>
+                                <button data-action="branch-from-message" data-index="${index}" class="flex w-full items-center gap-2 px-3 py-1.5 text-left whitespace-nowrap text-teal-300 hover:bg-teal-900/30 transition-colors">
+                                    <svg class="w-3.5 h-3.5 shrink-0 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+                                    <span>Branch From Here</span>
+                                </button>
                                 <button data-action="create-static-from-message" data-index="${index}" class="flex w-full items-center gap-2 px-3 py-1.5 text-left whitespace-nowrap text-gray-300 hover:bg-gray-800/80 transition-colors">
                                     <svg class="w-3.5 h-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                     <span>Create Static Memory</span>
@@ -20413,16 +20643,24 @@ Write only the character's message.`;
 
             /**
              * Toggles the Journal & Inventory panel collapsed/expanded state.
+             * @param {boolean|null} forceOpen - Optional forced state.
              */
-            toggleInventoryPanel() {
+            toggleInventoryPanel(forceOpen = null) {
                 const state = StateManager.getState();
                 if (state && state.enableJournal === false) return;
                 const container = document.getElementById('inventory-panel-container');
                 if (container) {
-                    const wasHidden = container.classList.contains('hidden');
-                    container.classList.toggle('hidden');
-                    if (wasHidden) {
+                    if (forceOpen === true) {
+                        container.classList.remove('hidden');
                         this.renderInventoryPanel();
+                    } else if (forceOpen === false) {
+                        container.classList.add('hidden');
+                    } else {
+                        const wasHidden = container.classList.contains('hidden');
+                        container.classList.toggle('hidden');
+                        if (wasHidden) {
+                            this.renderInventoryPanel();
+                        }
                     }
                 }
             },
@@ -20498,23 +20736,7 @@ Write only the character's message.`;
                 if (valStr === null) return;
                 const value = Math.max(0, Math.min(100, parseInt(valStr) || 50));
 
-                // Try to find matching character ID in roster
-                const characters = (ReactiveStore.state.characters || []);
-                const character = characters.find(c => c.name.toLowerCase().includes(charName.toLowerCase()));
-                const charId = character ? character.id : null;
-                const actualName = character ? character.name : charName;
-
-                // Add
-                const state = StateManager.getState();
-                if (state && state.gameState) {
-                    state.gameState.relationships.push({
-                        id: UTILITY.uuid(),
-                        characterId: charId,
-                        characterName: actualName,
-                        track: track,
-                        value: value
-                    });
-                }
+                InventoryController.addRelationship(charName, track, value);
             },
 
             /**
@@ -26115,6 +26337,14 @@ Write only the character's message.`;
                     case 'location-details-modal':
                         UIManager.renderLocationDetailsModal();
                         break;
+
+                    case 'branching-timeline-modal':
+                        if (typeof TimelineController !== 'undefined' && !this._openingTimeline) {
+                            this._openingTimeline = true;
+                            TimelineController.open().finally(() => { this._openingTimeline = false; });
+                            return;
+                        }
+                        break;
                 }
 
                 // 3. Open the modal via the low-level manager
@@ -28853,13 +29083,14 @@ Write only the character's message.`;
                 for (let i = 0; i <= retries; i++) {
                     try {
                         const res = await APIService.callAI(prompt, false);
-                        if (res) return res.trim();
-                        throw new Error("Empty text response");
+                        if (res && res.trim()) return res.trim();
+                        throw new Error("Empty text response from AI model");
                     } catch (e) {
                         lastErr = e;
                     }
                 }
                 console.warn("[Architect] _callAgentText failed after retries:", lastErr && lastErr.message);
+                this.lastAgentErr = lastErr;
                 return null;
             },
 
@@ -28873,11 +29104,23 @@ Write only the character's message.`;
                 // Step A: Brief
                 const briefPrompt = PromptBuilder.buildConceptBriefPrompt(userPrompt);
                 const briefRaw = await this._callAgentText(briefPrompt);
-                if (!briefRaw) throw new Error("Concept Agent failed to generate a valid story brief.");
+                if (!briefRaw) {
+                    const detail = this.lastAgentErr && this.lastAgentErr.message ? `: ${this.lastAgentErr.message}` : "";
+                    throw new Error(`Concept Agent failed to generate a valid story brief${detail}`);
+                }
 
                 const briefData = UTILITY.extractStructuredHeadings(briefRaw, ['TITLE', 'CREATOR_NOTES', 'TAGS', 'SCENARIO_NAME', 'BRIEF_SUMMARY']);
                 if (typeof briefData.tags === 'string') {
                     briefData.tags = briefData.tags.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                if (!briefData.title || briefData.title.trim() === '') {
+                    briefData.title = userPrompt.length > 50 ? userPrompt.substring(0, 47) + '...' : (userPrompt || "Untitled Story");
+                }
+                if (!briefData.creator_notes || briefData.creator_notes.trim() === '') {
+                    briefData.creator_notes = briefData.brief_summary || briefRaw || userPrompt;
+                }
+                if (!briefData.tags || briefData.tags.length === 0) {
+                    briefData.tags = ["Fantasy", "Adventure", "Interactive"];
                 }
 
                 // Step B: Roster
@@ -28885,11 +29128,17 @@ Write only the character's message.`;
                 const rosterPrompt = PromptBuilder.buildConceptRosterPrompt(briefData, userPrompt);
                 const rosterRaw = await this._callAgentText(rosterPrompt);
 
-                const rawCharacters = UTILITY.extractDelimitedList(rosterRaw, '|', ['name', 'role', 'archetype']);
-                briefData.characters = rawCharacters.filter(c => c.name);
+                let rawCharacters = [];
+                if (rosterRaw) {
+                    rawCharacters = UTILITY.extractDelimitedList(rosterRaw, '|', ['name', 'role', 'archetype']);
+                }
+                briefData.characters = rawCharacters.filter(c => c && c.name);
 
                 if (!briefData.characters || briefData.characters.length === 0) {
-                    throw new Error("Concept Agent failed to generate a valid character roster.");
+                    briefData.characters = [
+                        { name: "Narrator", role: "PrimaryAI", archetype: "Storyteller" },
+                        { name: "Protagonist", role: "User", archetype: "Adventurer" }
+                    ];
                 }
 
                 return briefData;
@@ -29120,13 +29369,14 @@ Write only the character's message.`;
                 for (let i = 0; i <= retries; i++) {
                     try {
                         const res = await APIService.callAI(prompt, false);
-                        if (res) return res.trim();
-                        throw new Error("Empty text response");
+                        if (res && res.trim()) return res.trim();
+                        throw new Error("Empty text response from AI model");
                     } catch (e) {
                         lastErr = e;
                     }
                 }
                 console.warn("[Architect] _callAgentText failed after retries:", lastErr && lastErr.message);
+                this.lastAgentErr = lastErr;
                 return null;
             },
 
@@ -29136,11 +29386,23 @@ Write only the character's message.`;
                 // Step A: Brief
                 const briefPrompt = PromptBuilder.buildScenarioBriefPrompt(existingStory, userPrompt);
                 const briefRaw = await this._callAgentText(briefPrompt);
-                if (!briefRaw) throw new Error("Concept Agent failed to generate a valid scenario brief.");
+                if (!briefRaw) {
+                    const detail = this.lastAgentErr && this.lastAgentErr.message ? `: ${this.lastAgentErr.message}` : "";
+                    throw new Error(`Concept Agent failed to generate a valid scenario brief${detail}`);
+                }
 
                 const briefData = UTILITY.extractStructuredHeadings(briefRaw, ['TITLE', 'CREATOR_NOTES', 'TAGS', 'SCENARIO_NAME', 'BRIEF_SUMMARY']);
                 if (typeof briefData.tags === 'string') {
                     briefData.tags = briefData.tags.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                if (!briefData.title || briefData.title.trim() === '') {
+                    briefData.title = userPrompt.length > 50 ? userPrompt.substring(0, 47) + '...' : (userPrompt || "New Scenario");
+                }
+                if (!briefData.creator_notes || briefData.creator_notes.trim() === '') {
+                    briefData.creator_notes = briefData.brief_summary || briefRaw || userPrompt;
+                }
+                if (!briefData.tags || briefData.tags.length === 0) {
+                    briefData.tags = existingStory.tags || ["Adventure"];
                 }
 
                 // Step B: Roster
@@ -29148,11 +29410,19 @@ Write only the character's message.`;
                 const rosterPrompt = PromptBuilder.buildScenarioRosterPrompt(existingStory, briefData, userPrompt);
                 const rosterRaw = await this._callAgentText(rosterPrompt);
 
-                const rawCharacters = UTILITY.extractDelimitedList(rosterRaw, '|', ['name', 'role', 'archetype']);
-                briefData.characters = rawCharacters.filter(c => c.name);
+                let rawCharacters = [];
+                if (rosterRaw) {
+                    rawCharacters = UTILITY.extractDelimitedList(rosterRaw, '|', ['name', 'role', 'archetype']);
+                }
+                briefData.characters = rawCharacters.filter(c => c && c.name);
 
                 if (!briefData.characters || briefData.characters.length === 0) {
-                    throw new Error("Concept Agent failed to generate a valid scenario roster.");
+                    briefData.characters = (existingStory.characters && existingStory.characters.length > 0)
+                        ? existingStory.characters.map(c => ({ name: c.name, role: c.is_user ? 'User' : 'PrimaryAI', archetype: 'Character' }))
+                        : [
+                            { name: "Narrator", role: "PrimaryAI", archetype: "Storyteller" },
+                            { name: "Protagonist", role: "User", archetype: "Adventurer" }
+                        ];
                 }
 
                 return briefData;
@@ -33100,7 +33370,59 @@ Write only the descriptive paragraphs.`;
             async generateStoryPhase1(event) {
                 const input = document.getElementById('gen-story-prompt');
                 const userPrompt = input.value.trim();
-                if (!userPrompt) { alert("Please enter a prompt."); return; }
+                if (!userPrompt) {
+                    if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                        UIManager.showNotification("Please enter a prompt for your story concept.", "warning");
+                    } else {
+                        alert("Please enter a prompt.");
+                    }
+                    return;
+                }
+
+                // Check provider readiness before starting progress
+                const globalSettings = (typeof StateManager !== 'undefined' && StateManager.data && StateManager.data.globalSettings) || {};
+                const state = (typeof StateManager !== 'undefined' && StateManager.getState && StateManager.getState()) || {};
+                const provider = globalSettings.apiProvider || state.apiProvider || 'gemini';
+                const geminiKey = globalSettings.geminiApiKey || state.geminiApiKey;
+                const openRouterKey = globalSettings.openRouterKey || state.openRouterKey;
+                const nanoGPTKey = globalSettings.nanoGPTKey || state.nanoGPTKey;
+
+                if (provider === 'gemini' && !geminiKey) {
+                    const msg = "Gemini API key is required. Please enter your key in Settings (get a free key at aistudio.google.com/app/apikey).";
+                    if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                        UIManager.showNotification(msg, 'error');
+                    } else {
+                        alert(msg);
+                    }
+                    if (typeof AppController !== 'undefined' && AppController.openSettingsModal) {
+                        setTimeout(() => AppController.openSettingsModal(), 300);
+                    }
+                    return;
+                }
+                if (provider === 'openrouter' && !openRouterKey) {
+                    const msg = "OpenRouter API key is required. Please configure it in Settings.";
+                    if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                        UIManager.showNotification(msg, 'error');
+                    } else {
+                        alert(msg);
+                    }
+                    if (typeof AppController !== 'undefined' && AppController.openSettingsModal) {
+                        setTimeout(() => AppController.openSettingsModal(), 300);
+                    }
+                    return;
+                }
+                if (provider === 'nanogpt' && !nanoGPTKey) {
+                    const msg = "NanoGPT API key is required. Please configure it in Settings.";
+                    if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                        UIManager.showNotification(msg, 'error');
+                    } else {
+                        alert(msg);
+                    }
+                    if (typeof AppController !== 'undefined' && AppController.openSettingsModal) {
+                        setTimeout(() => AppController.openSettingsModal(), 300);
+                    }
+                    return;
+                }
 
                 let promptToUse = userPrompt;
 
@@ -33165,8 +33487,19 @@ Write only the descriptive paragraphs.`;
                     document.getElementById('gen-approval-tags-input').value = (conceptData.tags || []).join(', ');
 
                 } catch (e) {
-                    alert("Generation Error: " + e.message);
+                    const errorMsg = (e && e.message) ? e.message : "Unknown generation error";
+                    if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                        UIManager.showNotification("Generation Error: " + errorMsg, "error");
+                    } else {
+                        alert("Generation Error: " + errorMsg);
+                    }
+                    console.error("Story Architect generation failed:", e);
                     this.retryGenStory();
+                    if (errorMsg.includes("API key") || errorMsg.includes("API Key") || errorMsg.includes("Settings")) {
+                        if (typeof AppController !== 'undefined' && AppController.openSettingsModal) {
+                            setTimeout(() => AppController.openSettingsModal(), 600);
+                        }
+                    }
                 }
             },
 
@@ -41531,6 +41864,20 @@ Return ONLY the physical description. Write in the 3rd person. No preamble.`;
                     return;
                 }
 
+                const globalSettings = StateManager.data.globalSettings;
+                const backend = globalSettings.imageGenBackend || 'koboldcpp';
+                if (backend === 'disabled') {
+                    return;
+                }
+                if (backend === 'nanogpt' && !(globalSettings.imageGenNanoGPTKey || globalSettings.nanoGPTKey)) {
+                    console.log('[Auto-Image] NanoGPT selected but no API key configured. Skipping image generation.');
+                    return;
+                }
+                if (backend === 'openrouter' && !(globalSettings.imageGenOpenRouterKey || globalSettings.openRouterKey)) {
+                    console.log('[Auto-Image] OpenRouter selected but no API key configured. Skipping image generation.');
+                    return;
+                }
+
                 console.log(`[Auto-Image] Starting background image generation for: ${location.name || imgKey}`);
                 this.RUNTIME.generatingImages.add(imgKey);
 
@@ -43263,9 +43610,26 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
          * =================================================================================================
          */
         const InventoryController = {
+            _lastSnapshot: null,
+
+            /**
+             * Reverts the most recent state change parsed from chat indicators.
+             */
+            undoLastStateChange() {
+                const state = StateManager.getState();
+                if (!state || !this._lastSnapshot) return;
+                state.gameState = JSON.parse(JSON.stringify(this._lastSnapshot));
+                this._lastSnapshot = null;
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined') {
+                    if (typeof UIManager.renderInventoryPanel === 'function') UIManager.renderInventoryPanel();
+                    if (typeof UIManager.showNotification === 'function') UIManager.showNotification('State update reverted.', 'info');
+                }
+            },
+
             /**
              * Processes all [STATE: ...] instructions found in a newly generated or modified message,
-             * updates state.gameState, and displays notifications to the user.
+             * updates state.gameState, and displays notifications to the user with Undo/Edit controls.
              * @param {Object} messageObj - The narrative message object.
              */
             processStateUpdates(messageObj) {
@@ -43283,6 +43647,9 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                 messageObj.content = parseResult.cleanedText;
 
                 if (parseResult.changes.length === 0 || state.enableJournal === false) return;
+
+                // Snapshot prior state for Undo recovery
+                this._lastSnapshot = JSON.parse(JSON.stringify(state.gameState));
 
                 let snapshotObj = null;
                 if (typeof NarrativeController !== 'undefined' && messageObj && messageObj.id) {
@@ -43382,12 +43749,17 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                     }
                 });
 
-                // Trigger Toast Notifications
                 if (notifications.length > 0) {
+                    if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                    if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                        UIManager.renderInventoryPanel();
+                    }
+
+                    // Trigger Toast Notifications with Undo / Edit controls
                     notifications.forEach((note, index) => {
                         setTimeout(() => {
-                            if (typeof UIManager !== 'undefined' && UIManager.showToast) {
-                                UIManager.showToast(note, false);
+                            if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                                UIManager.showNotification(`State Updated: ${note}. <button onclick="InventoryController.undoLastStateChange()" class="underline font-bold text-teal-300 hover:text-teal-100 ml-2 cursor-pointer">Undo</button> <button onclick="UIManager.toggleInventoryPanel(true)" class="underline font-bold text-gray-300 hover:text-white ml-1 cursor-pointer">Edit</button>`, 'info');
                             } else {
                                 console.log("[STATE UPDATE]:", note);
                             }
@@ -43418,12 +43790,20 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
 
                 // Clean up zero-value resources
                 state.gameState.resources = state.gameState.resources.filter(r => r.value > 0);
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             removeResource(id) {
                 const state = ReactiveStore.state;
                 if (!state.gameState) return;
                 state.gameState.resources = state.gameState.resources.filter(r => r.id !== id);
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             /**
@@ -43441,6 +43821,10 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                     log: objective ? [objective] : [],
                     characterId: characterId || null
                 });
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             updateQuest(id, status, objective, characterId) {
@@ -43459,6 +43843,10 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                         quest.characterId = characterId || null;
                     }
                 }
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             updateQuestObjective(questId, objective) {
@@ -43471,17 +43859,45 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                     if (!quest.log) quest.log = [];
                     quest.log.push(objective);
                 }
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             deleteQuest(id) {
                 const state = ReactiveStore.state;
                 if (!state.gameState) return;
                 state.gameState.journal = state.gameState.journal.filter(q => q.id !== id);
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             /**
              * Directly manages relationships via UI modal actions.
              */
+            addRelationship(charName, track = 'Affection', value = 50) {
+                const state = ReactiveStore.state;
+                if (!state.gameState) state.gameState = { resources: [], relationships: [], journal: [] };
+                const characters = (state.characters || []);
+                const character = characters.find(c => c.name.toLowerCase().includes(charName.toLowerCase()));
+                const charId = character ? character.id : null;
+                const actualName = character ? character.name : charName;
+                state.gameState.relationships.push({
+                    id: UTILITY.uuid(),
+                    characterId: charId,
+                    characterName: actualName,
+                    track: track,
+                    value: Math.max(0, Math.min(100, value))
+                });
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
+            },
+
             updateRelationship(id, value, track) {
                 const state = ReactiveStore.state;
                 if (!state.gameState) return;
@@ -43491,12 +43907,20 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                     rel.value = Math.max(0, Math.min(100, value));
                     if (track) rel.track = track;
                 }
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             deleteRelationship(id) {
                 const state = ReactiveStore.state;
                 if (!state.gameState) return;
                 state.gameState.relationships = state.gameState.relationships.filter(r => r.id !== id);
+                if (typeof ReactiveStore.forceSave === 'function') ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && typeof UIManager.renderInventoryPanel === 'function') {
+                    UIManager.renderInventoryPanel();
+                }
             },
 
             /**
@@ -43646,6 +44070,374 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                     ReactiveStore.forceSave();
                     UIManager.renderInventoryPanel();
                 }
+            }
+        };
+
+        /**
+         * =================================================================================================
+         * [SEC:JS:CTRL:TML]
+         * TimelineController Module
+         * Interactive Branching Timeline Canvas.
+         * Visualizes narrative history trees, forks, and enables seamless timeline navigation.
+         * =================================================================================================
+         */
+        const TimelineController = {
+            pan: { x: 80, y: 50 },
+            zoom: 1,
+            isDragging: false,
+            dragStart: { x: 0, y: 0 },
+            initialPan: { x: 80, y: 50 },
+            narrativesData: [],
+            activeStory: null,
+
+            async open() {
+                const state = (typeof ReactiveStore !== 'undefined' && ReactiveStore.state) || {};
+                if (!state || !state.storyId) {
+                    if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                        UIManager.showNotification("Open a story first to view its branching timeline.", "warning");
+                    }
+                    return;
+                }
+
+                this.activeStory = await DBService.getStory(state.storyId);
+                if (!this.activeStory) return;
+
+                const narrativeStubs = this.activeStory.narratives || [];
+                const fullNarratives = [];
+                for (const stub of narrativeStubs) {
+                    try {
+                        const n = await DBService.getNarrative(stub.id);
+                        if (n) fullNarratives.push(n);
+                    } catch (e) {
+                        console.warn("[Timeline] Failed loading narrative:", stub.id, e);
+                    }
+                }
+                this.narrativesData = fullNarratives;
+
+                const badge = document.getElementById('timeline-current-branch-badge');
+                if (badge) {
+                    badge.textContent = state.narrativeName || "Current Branch";
+                }
+
+                if (typeof AppController !== 'undefined' && AppController.openModal) {
+                    AppController.openModal('branching-timeline-modal');
+                }
+
+                this.render();
+                this.bindEvents();
+            },
+
+            render() {
+                const viewport = document.getElementById('timeline-canvas-viewport');
+                if (!viewport) return;
+                viewport.innerHTML = '';
+
+                const state = ReactiveStore.state || {};
+                const currentNarrativeId = state.narrativeId;
+
+                const branchXSpacing = 280;
+                const nodeYSpacing = 72;
+                const nodeRadius = 14;
+
+                const branches = this.narrativesData.length > 0 ? this.narrativesData : [{
+                    id: currentNarrativeId,
+                    name: state.narrativeName || 'Main Path',
+                    state: { chat_history: state.chat_history || [] }
+                }];
+
+                const branchMap = new Map();
+                branches.forEach((b, idx) => {
+                    branchMap.set(b.id, {
+                        ...b,
+                        branchIndex: idx,
+                        isCurrent: b.id === currentNarrativeId
+                    });
+                });
+
+                let elementsSvg = '';
+
+                branches.forEach((branch, colIdx) => {
+                    const isCurrent = branch.id === currentNarrativeId;
+                    const history = (branch.state && Array.isArray(branch.state.chat_history)) ? branch.state.chat_history : [];
+                    const colX = 140 + (colIdx * branchXSpacing);
+
+                    const branchTitle = (branch.name || `Branch ${colIdx + 1}`).slice(0, 24);
+                    elementsSvg += `
+                        <g class="branch-header cursor-pointer" onclick="TimelineController.jumpToNode('${branch.id}', ${Math.max(0, history.length - 1)})" transform="translate(${colX}, 40)">
+                            <rect x="-85" y="-18" width="170" height="32" rx="16" fill="${isCurrent ? 'rgba(20, 184, 166, 0.25)' : 'rgba(30, 41, 59, 0.85)'}" stroke="${isCurrent ? '#14b8a6' : '#475569'}" stroke-width="${isCurrent ? '2' : '1'}"/>
+                            <text x="0" y="4" text-anchor="middle" fill="${isCurrent ? '#2dd4bf' : '#cbd5e1'}" font-size="12" font-weight="bold" font-family="monospace">${UTILITY.escapeHTML(branchTitle)}</text>
+                        </g>
+                    `;
+
+                    if (branch.parentNarrativeId && branchMap.has(branch.parentNarrativeId)) {
+                        const parent = branchMap.get(branch.parentNarrativeId);
+                        const parentColX = 140 + (parent.branchIndex * branchXSpacing);
+                        const forkIndex = branch.branchPointIndex || 0;
+                        const forkY = 100 + (forkIndex * nodeYSpacing);
+                        const startY = 100;
+                        const cX = parentColX + (colX - parentColX) * 0.5;
+                        elementsSvg += `
+                            <path d="M ${parentColX} ${forkY} C ${cX} ${forkY}, ${cX} ${startY}, ${colX} ${startY}" 
+                                  fill="none" stroke="${isCurrent ? '#14b8a6' : '#64748b'}" stroke-width="2" stroke-dasharray="4 4"/>
+                        `;
+                    }
+
+                    if (history.length === 0) {
+                        elementsSvg += `
+                            <circle cx="${colX}" cy="100" r="${nodeRadius}" fill="rgba(55,65,81,0.8)" stroke="#64748b" stroke-width="2"/>
+                            <text x="${colX + 22}" y="104" fill="#94a3b8" font-size="11">Empty</text>
+                        `;
+                    }
+
+                    history.forEach((msg, msgIdx) => {
+                        const nodeY = 100 + (msgIdx * nodeYSpacing);
+                        const nextY = 100 + ((msgIdx + 1) * nodeYSpacing);
+
+                        if (msgIdx < history.length - 1) {
+                            elementsSvg += `
+                                <line x1="${colX}" y1="${nodeY}" x2="${colX}" y2="${nextY}" 
+                                      stroke="${isCurrent ? '#14b8a6' : '#334155'}" 
+                                      stroke-width="${isCurrent ? '3' : '2'}" 
+                                      ${isCurrent ? 'filter="url(#active-path-glow)"' : ''}/>
+                            `;
+                        }
+
+                        const char = ReactiveStore.getCharacter(msg.character_id);
+                        const isUser = char ? char.is_user : (msg.character_id === 'user' || msg.is_user);
+                        const isNarrator = char ? char.is_narrator : (msg.character_id === 'narrator');
+
+                        const nodeFill = isUser ? '#6366f1' : (isNarrator ? '#0d9488' : '#ec4899');
+                        const nodeStroke = isCurrent ? '#ffffff' : '#64748b';
+                        const speakerName = char ? char.name : (isUser ? 'User' : 'Narrator');
+                        const snippet = (msg.content || '').replace(/\s+/g, ' ').slice(0, 160);
+
+                        elementsSvg += `
+                            <g class="timeline-node-group cursor-pointer" 
+                               data-narrative-id="${branch.id}" 
+                               data-msg-index="${msgIdx}"
+                               data-speaker="${UTILITY.escapeHTML(speakerName)}"
+                               data-content="${UTILITY.escapeHTML(snippet)}"
+                               data-timestamp="${msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : ''}">
+                                ${isCurrent ? `<circle cx="${colX}" cy="${nodeY}" r="${nodeRadius + 4}" fill="none" stroke="#2dd4bf" stroke-width="1.5" opacity="0.6"/>` : ''}
+                                <circle cx="${colX}" cy="${nodeY}" r="${nodeRadius}" fill="${nodeFill}" stroke="${nodeStroke}" stroke-width="2"/>
+                                <text x="${colX}" y="${nodeY + 4}" text-anchor="middle" fill="#ffffff" font-size="10" font-weight="bold">${msgIdx + 1}</text>
+                                <text x="${colX + 22}" y="${nodeY + 4}" fill="${isCurrent ? '#f1f5f9' : '#94a3b8'}" font-size="11" font-weight="${isCurrent ? '600' : 'normal'}" class="select-none">
+                                    ${UTILITY.escapeHTML(speakerName)}
+                                </text>
+                            </g>
+                        `;
+                    });
+                });
+
+                viewport.innerHTML = elementsSvg;
+                this.updateTransform();
+            },
+
+            updateTransform() {
+                const viewport = document.getElementById('timeline-canvas-viewport');
+                if (viewport) {
+                    viewport.setAttribute('transform', `translate(${this.pan.x}, ${this.pan.y}) scale(${this.zoom})`);
+                }
+            },
+
+            bindEvents() {
+                const container = document.getElementById('timeline-canvas-container');
+                if (!container || container.dataset.eventsBound) return;
+                container.dataset.eventsBound = 'true';
+
+                container.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.timeline-node-group') || e.target.closest('#timeline-node-popover')) return;
+                    this.isDragging = true;
+                    this.dragStart = { x: e.clientX, y: e.clientY };
+                    this.initialPan = { ...this.pan };
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging) return;
+                    const dx = e.clientX - this.dragStart.x;
+                    const dy = e.clientY - this.dragStart.y;
+                    this.pan.x = this.initialPan.x + dx;
+                    this.pan.y = this.initialPan.y + dy;
+                    this.updateTransform();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                });
+
+                container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
+                    this.zoom = Math.max(0.3, Math.min(2.5, this.zoom * zoomFactor));
+                    this.updateTransform();
+                }, { passive: false });
+
+                const popover = document.getElementById('timeline-node-popover');
+                container.addEventListener('click', (e) => {
+                    const nodeGroup = e.target.closest('.timeline-node-group');
+                    if (!nodeGroup) {
+                        if (popover && !e.target.closest('#timeline-node-popover')) {
+                            popover.classList.add('hidden');
+                        }
+                        return;
+                    }
+
+                    const narrativeId = nodeGroup.dataset.narrativeId;
+                    const msgIndex = parseInt(nodeGroup.dataset.msgIndex, 10);
+                    const speaker = nodeGroup.dataset.speaker;
+                    const content = nodeGroup.dataset.content;
+                    const time = nodeGroup.dataset.timestamp;
+
+                    const rect = nodeGroup.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    const posX = Math.min(containerRect.width - 290, Math.max(10, rect.left - containerRect.left + 25));
+                    const posY = Math.min(containerRect.height - 180, Math.max(10, rect.top - containerRect.top - 20));
+
+                    if (popover) {
+                        popover.style.left = `${posX}px`;
+                        popover.style.top = `${posY}px`;
+                        popover.innerHTML = `
+                            <div class="flex items-center justify-between pb-1.5 border-b border-gray-800">
+                                <span class="font-bold text-teal-400">#${msgIndex + 1} ${speaker}</span>
+                                <span class="text-[10px] text-gray-500">${time}</span>
+                            </div>
+                            <p class="text-gray-300 text-xs leading-relaxed italic line-clamp-3">"${content}"</p>
+                            <div class="flex items-center gap-2 pt-1.5 border-t border-gray-800">
+                                <button onclick="TimelineController.jumpToNode('${narrativeId}', ${msgIndex})" class="flex-1 px-2.5 py-1 bg-teal-600 hover:bg-teal-500 text-white rounded font-semibold text-[11px] transition-colors cursor-pointer">
+                                    Switch Branch
+                                </button>
+                                <button onclick="TimelineController.forkFromNode('${narrativeId}', ${msgIndex})" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-semibold text-[11px] transition-colors cursor-pointer" title="Branch from here">
+                                    Branch Here
+                                </button>
+                            </div>
+                        `;
+                        popover.classList.remove('hidden');
+                    }
+                });
+
+                container.addEventListener('dblclick', (e) => {
+                    const nodeGroup = e.target.closest('.timeline-node-group');
+                    if (nodeGroup) {
+                        const narrativeId = nodeGroup.dataset.narrativeId;
+                        const msgIndex = parseInt(nodeGroup.dataset.msgIndex, 10);
+                        this.jumpToNode(narrativeId, msgIndex);
+                    }
+                });
+            },
+
+            async jumpToNode(narrativeId, msgIndex) {
+                const state = ReactiveStore.state;
+                if (!this.activeStory) return;
+
+                if (state.narrativeId !== narrativeId) {
+                    await LibraryController.loadNarrative(this.activeStory.id, narrativeId);
+                }
+
+                AppController.closeModal('branching-timeline-modal');
+                if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                    UIManager.showNotification(`Switched narrative branch!`, "success");
+                }
+
+                setTimeout(() => {
+                    const msgEl = document.querySelector(`[data-message-index="${msgIndex}"]`);
+                    if (msgEl) {
+                        msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        msgEl.classList.add('ring-2', 'ring-teal-400');
+                        setTimeout(() => msgEl.classList.remove('ring-2', 'ring-teal-400'), 2000);
+                    }
+                }, 300);
+            },
+
+            async forkFromNode(sourceNarrativeId, upToIndex) {
+                if (!this.activeStory) return;
+                const source = this.narrativesData.find(n => n.id === sourceNarrativeId);
+                if (!source) return;
+
+                const defaultName = prompt("Enter a name for this new branch:", `${source.name} (Fork @ #${upToIndex + 1})`);
+                if (!defaultName) return;
+
+                const newHistory = (source.state && Array.isArray(source.state.chat_history))
+                    ? JSON.parse(JSON.stringify(source.state.chat_history.slice(0, upToIndex + 1)))
+                    : [];
+
+                const newNarrative = {
+                    id: UTILITY.uuid(),
+                    name: defaultName.trim(),
+                    last_modified: new Date().toISOString(),
+                    active_character_ids: source.active_character_ids ? [...source.active_character_ids] : [],
+                    parentNarrativeId: sourceNarrativeId,
+                    branchPointIndex: upToIndex,
+                    state: {
+                        ...JSON.parse(JSON.stringify(source.state || {})),
+                        chat_history: newHistory,
+                        messageCounter: newHistory.length
+                    }
+                };
+
+                await DBService.saveNarrative(newNarrative);
+                if (!this.activeStory.narratives) this.activeStory.narratives = [];
+                this.activeStory.narratives.push({
+                    id: newNarrative.id,
+                    name: newNarrative.name,
+                    last_modified: newNarrative.last_modified,
+                    parentNarrativeId: sourceNarrativeId,
+                    branchPointIndex: upToIndex
+                });
+                await DBService.saveStory(this.activeStory);
+
+                if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                    UIManager.showNotification(`Created branch: "${newNarrative.name}"`, "success");
+                }
+                await LibraryController.loadNarrative(this.activeStory.id, newNarrative.id);
+                await this.open();
+            },
+
+            async forkCurrentBranch() {
+                const state = ReactiveStore.state;
+                if (!state || !state.storyId || !state.narrativeId) return;
+                const history = state.chat_history || [];
+                await this.forkFromNode(state.narrativeId, Math.max(0, history.length - 1));
+            },
+
+            async renameCurrentBranch() {
+                const state = ReactiveStore.state;
+                if (!state || !state.storyId || !state.narrativeId) return;
+                const newName = prompt("Enter new name for current branch:", state.narrativeName || "");
+                if (!newName || !newName.trim()) return;
+
+                state.narrativeName = newName.trim();
+                const story = await DBService.getStory(state.storyId);
+                if (story && story.narratives) {
+                    const stub = story.narratives.find(n => n.id === state.narrativeId);
+                    if (stub) stub.name = state.narrativeName;
+                    await DBService.saveStory(story);
+                }
+                const narr = await DBService.getNarrative(state.narrativeId);
+                if (narr) {
+                    narr.name = state.narrativeName;
+                    await DBService.saveNarrative(narr);
+                }
+                ReactiveStore.forceSave();
+                if (typeof UIManager !== 'undefined' && UIManager.showNotification) {
+                    UIManager.showNotification(`Branch renamed to "${state.narrativeName}"`, "success");
+                }
+                await this.open();
+            },
+
+            zoomIn() {
+                this.zoom = Math.min(2.5, this.zoom * 1.2);
+                this.updateTransform();
+            },
+
+            zoomOut() {
+                this.zoom = Math.max(0.3, this.zoom / 1.2);
+                this.updateTransform();
+            },
+
+            resetZoom() {
+                this.zoom = 1;
+                this.pan = { x: 80, y: 50 };
+                this.updateTransform();
             }
         };
 
@@ -43995,6 +44787,16 @@ Relationship | Alistair & Elara | Alistair has started to trust Elara after she 
                 });
                 ActionHandler.register('import-lorebook-file', (ds, val, e) => WorldController.importLorebook(e));
                 ActionHandler.register('export-lorebook', () => WorldController.exportLorebook());
+
+                // --- Branching Timeline Canvas ---
+                ActionHandler.register('timeline-fork-branch', () => TimelineController.forkCurrentBranch());
+                ActionHandler.register('timeline-rename-branch', () => TimelineController.renameCurrentBranch());
+                ActionHandler.register('timeline-zoom-in', () => TimelineController.zoomIn());
+                ActionHandler.register('timeline-zoom-out', () => TimelineController.zoomOut());
+                ActionHandler.register('timeline-reset-zoom', () => TimelineController.resetZoom());
+
+                // --- Journal & Inventory Panel ---
+                ActionHandler.register('toggle-inventory-panel', () => UIManager.toggleInventoryPanel());
 
                 ActionHandler.register('select-gm-rule', (ds) => {
                     ReactiveStore.state.selectedGMRuleId = ds.id;

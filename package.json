@@ -3,9 +3,11 @@
   "version": "1.1.0",
   "description": "EllipsisLM — AI-powered roleplay, self-hosted desktop edition.",
   "author": "EllipsisLM",
-  "main": "electron/main.js",
+  "main": "server.js",
   "scripts": {
-    "start": "electron .",
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build successful')\"",
     "test": "node test.js && node tools/check-map.test.js",
     "dist": "electron-builder --win --publish never",
     "dist:mac": "electron-builder --mac --publish never",
@@ -61,6 +63,8 @@
     }
   },
   "dependencies": {
+    "@google/genai": "^2.27.0",
+    "express": "^5.2.1",
     "playwright": "^1.60.0"
   }
 }

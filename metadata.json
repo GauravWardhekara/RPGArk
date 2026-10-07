@@ -1,0 +1,8 @@
+{
+  "name": "RPGArk",
+  "description": "AI-powered roleplay and story engine with visual lore, map generation, and interactive CYOA narrative systems.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
